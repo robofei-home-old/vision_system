@@ -1,0 +1,14 @@
+<launch>
+
+  <arg name="pause" default="" />
+  <arg name="models" default="" />
+  <arg name="image_color" default="" />
+  <arg name="image_cloud" default="" />
+
+  <node name="people" pkg="people" type="people_node.py" output="screen">
+    <param name="pause" value="$(arg pause)" />
+    <param name="models" value="$(arg models)" />
+    <param name="image_color" value="$(arg image_color)" />
+    <param name="image_cloud" value="$(arg image_cloud)" />
+  </node>
+</launch>

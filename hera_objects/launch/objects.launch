@@ -1,0 +1,5 @@
+<launch>
+
+  <node name ="objects" pkg="hera_objects" type="objects.py" output="screen"/>
+
+</launch>
