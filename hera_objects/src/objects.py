@@ -22,7 +22,7 @@ class Objects:
         rospy.Service('specific_object', FindSpecificObject, self.specific_handler)
 
         self.listener = tf.TransformListener()
-        self.reference_frame = '/base'
+        self.reference_frame = '/base_link'
 
         self._coordinates = ObjectPosition()
 
