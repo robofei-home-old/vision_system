@@ -15,7 +15,6 @@ class Objects:
 
         self._objects = list()
         self._positions = dict()
-        self._name = dict()
         self._obj = None
         rospy.Subscriber('/dodo_detector_ros/detected', DetectedObjectArray, self.get_detected_objects)
 
@@ -43,8 +42,6 @@ class Objects:
                     if target == '':
                         trans, a = self.listener.lookupTransform(self.reference_frame, obj_frame, rospy.Time(0))
                         self._positions[obj_frame] = trans
-                        self._name[obj_frame] = obj_class
-
                     elif obj_class == target:
                         trans, a = self.listener.lookupTransform(self.reference_frame, obj_frame, rospy.Time(0))
                         self._positions[obj_frame] = trans
@@ -117,10 +114,9 @@ class Objects:
             self._coordinates.rz = math.atan2(y,x)
             succeeded = True
 
-        
         rospy.loginfo('Found the coordinates!') if succeeded else rospy.loginfo("I'm a shame. Sorry!")
 
-        return self._coordinates, self._name[self._obj]
+        return self._coordinates
 
     def specific_handler(self, request):
         obj_class = request.type
