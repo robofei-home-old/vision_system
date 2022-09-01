@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>hera_objects</name>
+  <name>hera_face</name>
   <version>0.0.0</version>
-  <description>The hera_objects package</description>
+  <description>The hera_face package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
