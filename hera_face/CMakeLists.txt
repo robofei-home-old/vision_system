@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(hera_objects)
+project(hera_face)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -49,22 +49,21 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-   DIRECTORY
-   msg
-   FILES
-   DetectedObject.msg
-   DetectedObjectArray.msg
-   ObjectPosition.msg
-)
+#add_message_files(
+#   DIRECTORY
+#   msg
+#   FILES
+#)
 
 ## Generate services in the 'srv' folder
 add_service_files(
    DIRECTORY 
    srv
    FILES
-   FindObject.srv
-   FindSpecificObject.srv
+   face_capture.srv
+   face_list.srv
+   color_detect.srv
+   face_check.srv
 )
 
 
