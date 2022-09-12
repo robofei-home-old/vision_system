@@ -1,2 +1,2 @@
-# **freenect stack**
+# **Freenect Stack**
 ==============
