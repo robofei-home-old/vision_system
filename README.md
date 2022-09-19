@@ -12,7 +12,7 @@ git clone https://github.com/Nicolasalan/Perception-System.git
 cd <catkin_workspace>/
 source devel/setup.bash
 ```
-**start detection**
+### **start detection**
 Before starting the vision system, it is necessary to modify the main_config.yaml file so that the system can find the configuration files. To do this, just modify the path to the vision system configuration file. The vision system configuration file is located at:
 ```bash
 <catkin_workspace>/src/Perception-System/dodo_detector_ros/config/main_config.yaml
@@ -53,7 +53,8 @@ roslaunch dodo_detector_ros detect_kinect.launch
                 |-- labeled_image
                     |-- image
 ```
-**Initialize object location**
+### **Initialize object location**
+
 To initialize the object location system, you first have to modify the objects.py file so that the coordinates have a local reference. To do this, just modify the objects.py file, which is located at:
 ```bash
 <catkin_workspace>/src/Perception-System/hera_objects/src/objects.py
