@@ -77,3 +77,6 @@ position:
   ry: 0.0
   rz: 0.0
 ```
+## Links to related tutorials
+* [freenect_stack](https://github.com/robofei-home/vision_system/tree/main/freenect_stack)
+* [dodo_detector_ros](https://github.com/Nicolasalan/Perception-System/tree/main/dodo_detector_ros)
