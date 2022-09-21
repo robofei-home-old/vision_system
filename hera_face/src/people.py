@@ -55,7 +55,7 @@ class FaceRecog():
         except CvBridgeError as e:
             print(e)
         
-        self.people_dir = '/home/hera/catkin_hera/src/3rdParty/vision_system/hera_face/face_images/'
+        self.people_dir = '/home/sousa/Documents/hera_catkin_ws/src/hera_face/face_images/'
 
         files = fnmatch.filter(os.listdir(self.people_dir), '*.jpg')
 
@@ -66,6 +66,7 @@ class FaceRecog():
 
             for j in range(0,100):            
                 name = files[i].replace('.jpg','')
+                rospy.logerr(name)
                 face = face_recognition.load_image_file(self.people_dir + files[i])
                 enc = face_recognition.face_encodings(face)
                 if(len(enc)):
@@ -131,7 +132,7 @@ class FaceRecog():
 
 
         self.recog = 1
-        print(face_center)
+        print("Face centers: ", face_center)
         return face_names, face_center_float
 
 
@@ -155,10 +156,10 @@ class FaceRecog():
 
                 for i in resp:
                     j = resp.index(i)
-                    print(i)
+                    print("recog: ", i)
                     if i == request.name:
                         recog_request  = 1
-                        print("request ",resp)
+                        print("request ",resp[j])
                         print("center ",center[j])
 
                         return i, center[j]
