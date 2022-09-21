@@ -14,7 +14,7 @@ from os.path import expanduser
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs import point_cloud2 as pc2
 from sensor_msgs.msg import Image, PointCloud2
-from hera_objects.srv import face_capture_face
+from hera_face.srv import face_capture
 
 class FaceCapture():
 
@@ -22,7 +22,7 @@ class FaceCapture():
 
     def __init__(self):
         
-        rospy.Service('face_captures', face_capture_face, self.handler)
+        rospy.Service('face_captures', face_capture, self.handler)
 
         rospy.loginfo("Start FaceRecogniser Init process...")
         # get an instance of RosPack with the default search paths
