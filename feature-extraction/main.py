@@ -126,6 +126,10 @@ def pose_points(path_image):
             neck = pontos[1]
         if i == 8:
             cint = pontos[1] + 25
+        if i == 12:
+            knee = pontos[1]
+        if i == 9:
+            knee2 = pontos[1]
         i += 1
 
     creating_mask()     
@@ -141,7 +145,10 @@ def pose_points(path_image):
         if x == 0:
             cv2.imwrite('images/torso.png', modelo[neck - 25:cint, 0:])  
         elif x == 1:
-            cv2.imwrite('images/pernas.png', modelo[cint - 25:, 0:])
+            if knee == None:
+                cv2.imwrite('images/pernas.png', modelo[cint - 25:knee2, 0:])
+            else:
+                cv2.imwrite('images/pernas.png', modelo[cint - 25:knee, 0:])
         else:
             cv2.imwrite('images/cabeca.png', modelo[:neck - 10])    
   
@@ -167,43 +174,63 @@ def color(xxxxx):
         print(rgb)
     if rgb == (255, 255, 255):
         print('White')
+        return 'White'
     if rgb < (45, 45, 45):
         print('Black')
+        return 'Black'
     elif rgb[0] == rgb[1] and rgb[1] == rgb[2] and rgb[0] == rgb[2]:
         print('Grey')
+        return 'Grey'
 
     elif rgb[0] > rgb[1] and rgb[0] > rgb[2]:
         if rgb[0] > 209 and rgb[1] > 179 and rgb[2] > 134 and rgb != (255, 192, 203):
             print('Beige')
+            return 'Beige'
+
         elif (rgb == (184, 134, 11) or rgb == (189, 83, 107) or rgb == (139, 69, 19) or rgb == (160, 82, 45) or rgb == (
         188, 143, 143)) or rgb[0] > 204 and rgb[1] > 104 and rgb[2] < 144:
             print('Brown')
+            return 'Brown'
+
         elif rgb[0] > 204 and rgb[1] < 193 and rgb[2] > 91:
             print('Pink')
+            return 'Pink'
+
         elif rgb == (255, 140, 0) or rgb == (255, 165, 0):
             print('Orange')
+            return 'Orange'
+
         elif rgb == (255, 215, 0):
             print('Gold')
+            return 'Gold'
         elif rgb == (189, 83, 107):
             print('Green')
+            return 'Green'
         else:
             print('Red')
+            return 'Red'
 
     elif rgb[1] > rgb[0] and rgb[1] > rgb[2] or rgb == (47, 79, 79):
         print('green')
+        return 'Green'
 
     elif rgb[2] > rgb[1] and rgb[2] > rgb[0] or rgb == (0, 255, 255) or rgb == (0, 139, 139) or rgb == (0, 128, 128):
         if rgb[0] > 122 and rgb[1] < 113 and rgb[2] > 203 or rgb == (128, 0, 128) or rgb == (75, 0, 130):
             print('Purple')
+            return 'Purple'
         else:
             print('Blue')
+            return 'Blue'
 
     elif rgb == (128, 128, 0):
         print('Green')
+        return 'Green'
     elif rgb == (255, 255, 0):
         print('Yellow')
+        return 'Yellow'
     elif rgb == (255, 0, 255) or rgb == (238, 130, 238) or rgb == (218, 112, 214) or rgb == (221, 160, 221):
         print('Pink')
+        return 'Pink'
 
 
 def color_extraction(img_path):
@@ -220,6 +247,10 @@ def color_extraction(img_path):
 
     for parts in glob.glob('images/*'):
 
+        if parts == 'images/cabeca.png':
+            continue
+        
+        print(parts)
         # Get the main color of the image
         output_color = color(parts)
         # Add to the body_colors list
@@ -227,9 +258,11 @@ def color_extraction(img_path):
         body_colors.append(output_color)
 
     # Return the list of colors
+    print(body_colors)
     return body_colors
 
 color_extraction('images/img.jpeg')
+
 
 
 
