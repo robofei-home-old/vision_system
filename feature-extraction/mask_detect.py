@@ -11,32 +11,16 @@ import cv2
 import os
 from time import sleep
 
-def mask_image(path):
+def ifmask(path):
 	# construct the argument parser and parse the arguments
-	'''
-	ap = argparse.ArgumentParser()
-	ap.add_argument("-i", "--image", required=True,
-		help="path to input image")
-	ap.add_argument("-f", "--face", type=str,
-		default="face_detector",
-		help="path to face detector model directory")
-	ap.add_argument("-m", "--model", type=str,
-		default="mask_detector.model",
-		help="path to trained face mask detector model")
-	ap.add_argument("-c", "--confidence", type=float, default=0.5,
-		help="minimum probability to filter weak detections")
-	args = vars(ap.parse_args())
-	'''
 
 	# load our serialized face detector model from disk
-	print("[INFO] loading face detector model...")
 	prototxtPath = os.path.sep.join(['face_detector', "deploy.prototxt"])
 	weightsPath = os.path.sep.join(['face_detector',
 		"res10_300x300_ssd_iter_140000.caffemodel"])
 	net = cv2.dnn.readNet(prototxtPath, weightsPath)
 
 	# load the face mask detector model from disk
-	print("[INFO] loading face mask detector model...")
 	model = load_model('mask_detector.model')
 
 	# load the input image from disk, clone it, and grab the image spatial
@@ -102,10 +86,5 @@ def mask_image(path):
 			cv2.rectangle(image, (startX, startY), (endX, endY), color, 2)
 
 	# show the output image
-	cv2.imshow("Output", image)
-	cv2.waitKey(0)
-	sleep(5)
 	cv2.destroyAllWindows()
 	
-if __name__ == "__main__":
-	mask_image('host.jpg')

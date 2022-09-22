@@ -6,7 +6,9 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
+from tensorflow.keras.preprocessing.image import load_img
 from torchvision import transforms#, utils
+import cv2
 # import torch.optim as optim
 
 import numpy as np
@@ -58,12 +60,11 @@ def mask(img):
 
 
 
-    image_dir = os.path.join(os.getcwd(), img) # changed to 'images' directory which is populated while running the script
-    prediction_dir = os.path.join(os.getcwd(), 'results/') # changed to 'results' directory which is populated after the predictions
+    image_dir = os.path.join(os.getcwd(), 'images/') # changed to 'images' directory which is populated while running the script
+    prediction_dir = os.path.join(os.getcwd(), 'mask/') # changed to 'results' directory which is populated after the predictions
     model_dir = os.path.join(os.getcwd(), model_name + '.pth') # path to u2netp pretrained weights
 
     img_name_list = glob.glob(image_dir + os.sep + '*')
-    print(img_name_list)
 
     # --------- 2. dataloader ---------
     #1. dataloader
@@ -110,9 +111,9 @@ def mask(img):
         if not os.path.exists(prediction_dir):
             os.makedirs(prediction_dir, exist_ok=True)
         save_output(img_name_list[i_test],pred,prediction_dir)
-
+        print('Saved!')
         del d1,d2,d3,d4,d5,d6,d7
-    return load_img('/mask/mask.png')
 
-if __name__ == "__main__":
-    main()
+        return prediction_dir+img_name_list[i_test].split(os.sep)[-1].split('.')[0]+'.png'
+
+
