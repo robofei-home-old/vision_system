@@ -1,25 +1,23 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import matplotlib.image as mpimg
 from PIL import Image, ImageFile
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import cv2
 import extcolors
-import webcolors
 import os
 from colormap import rgb2hex
 from tensorflow.keras.preprocessing.image import load_img
 from tensorflow.keras.preprocessing.image import img_to_array
-from skimage.transform import resize
 from u2net_test import mask
-import argparse
+import glob
 import json
 
 
-def creating_mask(img_path):
+def creating_mask():
+    pf = glob.glob('images/*')
+    img_path = pf[0]
     output = mask(img_path)
+    output = load_img(output)
     RESCALE = 255
     out_img = img_to_array(output)
     THRESHOLD = 0.2
@@ -30,6 +28,8 @@ def creating_mask(img_path):
     mul_layer = np.expand_dims(out_img[:, :, 0], axis=2)
     a_layer = mul_layer * a_layer_init
     rgba_out = np.append(out_img, a_layer, axis=2)
+
+    
     original_image_path = img_path
     original_image = load_img(original_image_path)
     inp_img = img_to_array(original_image)
@@ -40,14 +40,15 @@ def creating_mask(img_path):
     # simply multiply the 2 rgba images to remove the backgound
     rem_back = (rgba_inp * rgba_out)
     rem_back_scaled = Image.fromarray((rem_back * RESCALE).astype('uint8'), 'RGBA')
-    display(rem_back_scaled)
     # save the resulting image to colab
-    rem_back_scaled.save('results/image_background_removed.png')
-    return 'results/image_background_removed.png'
+
+    rem_back_scaled.save('results/removed_background.png')
+
 
 
 def pose_points(path_image):
-    os.remove('images/*')
+    null = 'null'
+    
     BODY_PARTS = {"Nose": 0, "Neck": 1, "RShoulder": 2, "RElbow": 3, "RWrist": 4,
                   "LShoulder": 5, "LElbow": 6, "LWrist": 7, "RHip": 8, "RKnee": 9,
                   "RAnkle": 10, "LHip": 11, "LKnee": 12, "LAnkle": 13, "REye": 14,
@@ -60,8 +61,8 @@ def pose_points(path_image):
                   ["REye", "REar"], ["Nose", "LEye"], ["LEye", "LEar"]]
     inWidth = 640
     inHeight = 480
-    net = cv2.dnn.readNetFromTensorflow("/content/cv2pose/graph_opt.pb")
-    cap = cv2.imread('/content/U-2-Net/results/image_background_removed.png')
+    net = cv2.dnn.readNetFromTensorflow("graph_opt.pb")
+    cap = cv2.imread(path_image)
 
     while cv2.waitKey(1) < 0:
         frame = cap
@@ -106,19 +107,15 @@ def pose_points(path_image):
 
         t, _ = net.getPerfProfile()
         freq = cv2.getTickFrequency() / 1000
-        cv2.putText(frame, '%.2fms' % (t / freq), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
-
-        cv2_imshow(frame)
+        lx = cv2.putText(frame, '%.2fms' % (t / freq), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+        cv2.imwrite('results/pose_points.png', lx)
         break
 
-    with open("points.json", "w") as f:
-        json.dump(points, f)
 
-    modelo = cv2.imread('results/image_background_removed.png')
 
-    null = 'null'
+    modelo = cv2.imread('results/removed_background.png')
 
-    with open('/content/U-2-Net/points.json', 'r') as f:
+    with open('points.json', 'r') as f:
         point = json.load(f)
 
     i = 0
@@ -129,20 +126,32 @@ def pose_points(path_image):
             neck = pontos[1]
         if i == 8:
             cint = pontos[1] + 25
-        if i == 15:
-            eye = pontos[1] - 25
         i += 1
 
-    cv2.imwrite('images/torso.png', modelo[neck - 25:cint, 0:])
-    cv2.imwrite('images/pernas.png', modelo[cint - 25:, 0:])
-    cv2.imwrite('images/cabeca.png', modelo[:neck - 10])
+    creating_mask()     
 
-    return ('images/torso.png', 'images/pernas.png')
+    way = glob.glob('images/*')
+    for py_file in way:
+        try:
+            os.remove(py_file)
+        except OSError as e:
+            print(f"Error:{ e.strerror}")
+
+    for x in range(3):
+        if x == 0:
+            cv2.imwrite('images/torso.png', modelo[neck - 25:cint, 0:])  
+        elif x == 1:
+            cv2.imwrite('images/pernas.png', modelo[cint - 25:, 0:])
+        else:
+            cv2.imwrite('images/cabeca.png', modelo[:neck - 10])    
+  
+
+    print("Saved points!!")
 
 
-def color(img_path):
+def color(xxxxx):
     ImageFile.LOAD_TRUNCATED_IMAGES = True  # Permitir que imagens corrompidas sejam usadas
-    segm_image = img_path  # Caminho da imagem
+    segm_image = xxxxx  # Caminho da imagem
     # Mostrar imagem
     plt.figure(figsize=(9, 9))
     img = plt.imread(segm_image)
@@ -150,11 +159,15 @@ def color(img_path):
     plt.axis('off')
 
     colors_x = extcolors.extract_from_path(segm_image, tolerance=12, limit=12)
+
     rgb = (colors_x[0][0][0])
 
+    if rgb == (0, 0, 0):
+        rgb = (colors_x[0][1][0])
+        print(rgb)
     if rgb == (255, 255, 255):
         print('White')
-    if rgb == (0, 0, 0):
+    if rgb < (45, 45, 45):
         print('Black')
     elif rgb[0] == rgb[1] and rgb[1] == rgb[2] and rgb[0] == rgb[2]:
         print('Grey')
@@ -194,25 +207,29 @@ def color(img_path):
 
 
 def color_extraction(img_path):
-    # Create a mask for the person and remove background
-    mask_path = creating_mask(img_path)
+   
+
     # Separate the person in three parts and save a photo of each part and takes the path from it
     # body_parts - list of the body_image paths
-    body_parts = pose_points(mask_path)
+    pose_points(img_path) 
+    
+    # Create a mask for the person and remove background
+    
     # Create a empty list to save the colors
     body_colors = []
 
-    for parts in body_parts:
-        # Create a new mask for each body part and remove the background again
-        body_masks = creating_mask(parts)
+    for parts in glob.glob('images/*'):
+
         # Get the main color of the image
-        color = color(body_masks)
+        output_color = color(parts)
         # Add to the body_colors list
         # First element[0] is the torso color, second[1] is the legs color
-        body_colors.append(color)
+        body_colors.append(output_color)
 
     # Return the list of colors
     return body_colors
+
+color_extraction('images/img.jpeg')
 
 
 
