@@ -11,6 +11,7 @@ from tensorflow.keras.preprocessing.image import img_to_array
 from u2net_test import mask
 import glob
 import json
+from mask_detect import ifmask
 
 
 def creating_mask():
@@ -233,7 +234,7 @@ def color(xxxxx):
         return 'Pink'
 
 
-def color_extraction(img_path):
+def features(img_path):
    
 
     # Separate the person in three parts and save a photo of each part and takes the path from it
@@ -256,12 +257,12 @@ def color_extraction(img_path):
         # Add to the body_colors list
         # First element[0] is the torso color, second[1] is the legs color
         body_colors.append(output_color)
-
+    ifmask('images/cabeca.png')
     # Return the list of colors
     print(body_colors)
     return body_colors
 
-color_extraction('images/img.jpeg')
+features('images/img.jpeg')
 
 
 
