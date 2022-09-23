@@ -26,7 +26,7 @@ def ifmask(path):
 	# load the input image from disk, clone it, and grab the image spatial
 	# dimensions
 	image = cv2.imread(path)
-	orig = image.copy()
+	#orig = image.copy()
 	(h, w) = image.shape[:2]
 
 	# construct a blob from the image

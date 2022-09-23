@@ -1,3 +1,5 @@
+from distutils.log import error
+from importlib.util import module_for_loader
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -64,6 +66,7 @@ def pose_points(path_image):
     inHeight = 480
     net = cv2.dnn.readNetFromTensorflow("graph_opt.pb")
     cap = cv2.imread(path_image)
+    #cap = cv2.resize(aux, (720, 1280))
 
     while cv2.waitKey(1) < 0:
         frame = cap
@@ -110,51 +113,57 @@ def pose_points(path_image):
         freq = cv2.getTickFrequency() / 1000
         lx = cv2.putText(frame, '%.2fms' % (t / freq), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
         cv2.imwrite('results/pose_points.png', lx)
+        with open('points.json', 'w') as f:
+            json.dump(points, f)
+
         break
-
-
-
-    modelo = cv2.imread('results/removed_background.png')
-
+        
     with open('points.json', 'r') as f:
         point = json.load(f)
 
-    i = 0
-    for pontos in point:
-        if pontos == 'null':
-            continue
-        if i == 1:
-            neck = pontos[1]
-        if i == 8:
-            cint = pontos[1] + 25
-        if i == 12:
-            knee = pontos[1]
-        if i == 9:
-            knee2 = pontos[1]
-        i += 1
 
-    creating_mask()     
+    neck = point[1][1]
+    cint = point[8][1] + 25
+    if point[12][1] != null:
+        knee = point[12][1]
+        print(knee)
+    elif point[9][1] != null:
+        knee = point[9][1]
+        print(knee)
+    else:
+        knee = null
+        print(knee)
 
+    creating_mask()
+       
     way = glob.glob('images/*')
     for py_file in way:
         try:
             os.remove(py_file)
         except OSError as e:
             print(f"Error:{ e.strerror}")
+            
+    modelo = cv2.imread('results/removed_background.png')
 
     for x in range(3):
         if x == 0:
-            cv2.imwrite('images/torso.png', modelo[neck - 25:cint, 0:])  
+            foto = modelo[neck - 25:cint, 0:]
+            cv2.imwrite('images/torso.png', foto)  
         elif x == 1:
-            if knee == None:
-                cv2.imwrite('images/pernas.png', modelo[cint - 25:knee2, 0:])
-            else:
-                cv2.imwrite('images/pernas.png', modelo[cint - 25:knee, 0:])
+            if knee != null:
+                print("AQUI", knee)
+                print("CINT:", cint)
+                foto = modelo[cint - 25:knee, 0:]
+                print(type(foto))
+                cv2.imwrite('images/pernas.png', foto)
+            else: 
+                foto = modelo[cint - 25:, 0:]
+                cv2.imwrite('images/pernas.png', foto)
         else:
-            cv2.imwrite('images/cabeca.png', modelo[:neck - 10])    
-  
-
+            foto = modelo[:neck - 10]
+            cv2.imwrite('images/cabeca.png', foto)    
     print("Saved points!!")
+
 
 
 def color(xxxxx):
@@ -212,6 +221,9 @@ def color(xxxxx):
             return 'Red'
 
     elif rgb[1] > rgb[0] and rgb[1] > rgb[2] or rgb == (47, 79, 79):
+        if rgb == (133, 130, 111) or rgb == (124, 125, 111):
+            print('Beige')
+            return 'Beige'
         print('green')
         return 'Green'
 
@@ -235,7 +247,6 @@ def color(xxxxx):
 
 
 def features(img_path):
-   
 
     # Separate the person in three parts and save a photo of each part and takes the path from it
     # body_parts - list of the body_image paths
@@ -249,7 +260,7 @@ def features(img_path):
     for parts in glob.glob('images/*'):
 
         if parts == 'images/cabeca.png':
-            continue
+            ifmask('images/cabeca.png')
         
         print(parts)
         # Get the main color of the image
@@ -257,7 +268,6 @@ def features(img_path):
         # Add to the body_colors list
         # First element[0] is the torso color, second[1] is the legs color
         body_colors.append(output_color)
-    ifmask('images/cabeca.png')
     # Return the list of colors
     print(body_colors)
     return body_colors
