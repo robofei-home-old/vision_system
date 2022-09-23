@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from pyexpat import model
 import sys
 import os
 import rospy
@@ -54,8 +55,9 @@ class FaceRecog():
             video_capture = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
         except CvBridgeError as e:
             print(e)
-        
-        self.people_dir = '/home/sousa/Documents/hera_catkin_ws/src/hera_face/face_images/'
+    
+
+        self.people_dir = '/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/face_images/'
 
         files = fnmatch.filter(os.listdir(self.people_dir), '*.jpg')
 
@@ -73,7 +75,7 @@ class FaceRecog():
                     known_face_names.append(name)
                     faces_images.append(face)        
                     known_face_encodings.append(enc[0])
-                    break;
+                    break
                 else:
                     rospy.logerr("não achei cara nenhuma depois de 100 tentativas!!")
 
@@ -81,8 +83,10 @@ class FaceRecog():
         # robot vision
         small_frame = cv2.resize(video_capture, (0, 0), fx=0.5, fy=0.5)
 
-        face_locations = face_recognition.face_locations(small_frame)
+        face_locations = face_recognition.face_locations(small_frame, model="cnn")
+        print(face_locations)
         face_encodings = face_recognition.face_encodings(small_frame, face_locations)
+        
 
         face_names = []
         face_center = []
