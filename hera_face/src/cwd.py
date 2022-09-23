@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from curses.textpad import rectangle
 from pyexpat import model
 import sys
 import os
@@ -11,6 +12,8 @@ import time
 import face_recognition
 from cv_bridge import CvBridge, CvBridgeError
 from hera_face.srv import face_list
+import dlib
+import numpy as np
 
 class FaceRecog():
     # cuidado para nao ter imagem com tamanhos diferentes ou cameras diferentes, pois o reconhecimento nao vai funcionar
@@ -81,12 +84,19 @@ class FaceRecog():
 
 
         # robot vision
-        small_frame = cv2.resize(video_capture, (0, 0), fx=0.5, fy=0.5)
+        small_frame = cv2.cvtColor(video_capture, cv2.COLOR_BGR2GRAY)
 
-        face_locations = face_recognition.face_locations(small_frame, model="cnn")
-        print(face_locations)
-        face_encodings = face_recognition.face_encodings(small_frame, face_locations)
+        detector = dlib.get_frontal_face_detector()
+
+        abd = detector(small_frame, 1)
+        lf, up, rt, down = abd[0].left(), abd[0].top(), abd[0].right(), abd[0].bottom()
+        #converter dlib para lista
+        face_locations = [(lf, up, rt, down)]
         
+        
+        print("face_locations", face_locations)
+
+        face_encodings = face_recognition.face_encodings(small_frame, face_locations)
 
         face_names = []
         face_center = []
