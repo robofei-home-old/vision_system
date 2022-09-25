@@ -57,7 +57,7 @@ class FaceRecog():
             print(e)
     
 
-        self.people_dir = '/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/face_images/'
+        self.people_dir = '/home/sousa/Documents/catkin_hera/src/vision_system/hera_face/face_images/'
 
         files = fnmatch.filter(os.listdir(self.people_dir), '*.jpg')
 
