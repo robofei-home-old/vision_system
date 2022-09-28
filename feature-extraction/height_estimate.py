@@ -9,7 +9,6 @@ def height_estimate(distance, height):
         hf = (((subject_height*camera_image_height)/1280)/100) + 1.52
     print("Você tem entre %.2fm e %.2fm de altura." % ((hf - 0.02), (hf + 0.02)))
 
-distancia_laser = 150
-topo_bbox = 540
-
+distancia_laser = 50
+topo_bbox = 630
 height_estimate(distancia_laser, topo_bbox)

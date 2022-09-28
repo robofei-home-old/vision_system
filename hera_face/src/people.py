@@ -56,9 +56,9 @@ class FaceRecog():
             video_capture = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
         except CvBridgeError as e:
             print(e)
+    
 
-
-        self.people_dir = '/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/src/lib/face_images/'
+        self.people_dir = '/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/face_images/'
 
         files = fnmatch.filter(os.listdir(self.people_dir), '*.jpg')
 
