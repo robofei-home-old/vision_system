@@ -11,6 +11,7 @@ import time
 import face_recognition
 from cv_bridge import CvBridge, CvBridgeError
 from hera_face.srv import face_list
+import dlib
 
 class FaceRecog():
     # cuidado para nao ter imagem com tamanhos diferentes ou cameras diferentes, pois o reconhecimento nao vai funcionar
@@ -73,12 +74,14 @@ class FaceRecog():
                 enc = face_recognition.face_encodings(face)
                 if(len(enc)):
                     known_face_names.append(name)
-                    faces_images.append(face)        
+                    faces_images.append(face)     
                     known_face_encodings.append(enc[0])
                     break
                 else:
                     rospy.logerr("não achei cara nenhuma depois de 100 tentativas!!")
-
+        print("FEITO:")
+        print(enc)
+        print("known_face_encodings", known_face_encodings)
 
         # robot vision
         small_frame = cv2.resize(video_capture, (0, 0), fx=0.5, fy=0.5)

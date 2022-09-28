@@ -11,5 +11,4 @@ def height_estimate(distance, height):
 
 distancia_laser = 50
 topo_bbox = 630
-
 height_estimate(distancia_laser, topo_bbox)
