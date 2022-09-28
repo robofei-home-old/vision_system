@@ -56,9 +56,9 @@ class FaceRecog():
             video_capture = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
         except CvBridgeError as e:
             print(e)
-    
 
-        self.people_dir = '/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/face_images/'
+
+        self.people_dir = '/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/src/lib/face_images/'
 
         files = fnmatch.filter(os.listdir(self.people_dir), '*.jpg')
 
@@ -79,9 +79,7 @@ class FaceRecog():
                     break
                 else:
                     rospy.logerr("não achei cara nenhuma depois de 100 tentativas!!")
-        print("FEITO:")
-        print(enc)
-        print("known_face_encodings", known_face_encodings)
+
 
         # robot vision
         small_frame = cv2.resize(video_capture, (0, 0), fx=0.5, fy=0.5)
@@ -108,10 +106,10 @@ class FaceRecog():
         for (top, right, bottom, left), name in zip(face_locations, face_names):
 
             # Scale back up face locations since the frame we detected in was scaled to 1/4 size
-            top *= 2
-            right *= 2
-            bottom *= 2
-            left *= 2
+            #top *= 2
+            #right *= 2
+            #bottom *= 2
+            #left *= 2
 
             # Draw a box around the face
             cv2.rectangle(video_capture, (left, top), (right, bottom), (0, 0, 255), 2)
@@ -125,6 +123,7 @@ class FaceRecog():
             center_x = (right + left)/2
             #print("posicao em x:",center_x)
             face_center.append(center_x)
+        cv2.imshow('Video', video_capture)
 
         face_names_str = " - ".join(face_names)
         # transformar o center_x em float 
