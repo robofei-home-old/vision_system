@@ -1,3 +1,5 @@
-# feature-extraction
+## feature-extraction
 
-HAVE TO CREATE DIRECTORY "IMAGES" "RESULTS" "MASK"
+<b> Criar dir "mask", "images" e "results"</b>
+
+# Caso tenha erro de path (out of index), verificar nos files u2net, alguns endereços de diretórios ficam lá
