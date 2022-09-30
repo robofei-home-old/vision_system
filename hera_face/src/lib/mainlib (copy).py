@@ -1,4 +1,4 @@
-from fnmatch import fnmatch
+#from fnmatch import fnmatch
 import dlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,45 +44,52 @@ print(known_name)
 # Load the image in real time, have to change the path to de video capture
 #small_frame = cv2.imread("/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/src/lib/face_images/teste.jpg")
 
-face_name = []
+i = 0
 #open camera   
 video_capture = cv2.VideoCapture(0)
 while video_capture.isOpened():
     _,small_frame = video_capture.read()
     # Detect the faces in the image
     try:
+        face_name = []
         img_detected = detector(small_frame, 1)
+        print(img_detected)
         img_shape = sp(small_frame, img_detected[0])
         align_img = dlib.get_face_chip(small_frame, img_shape)
+        #print("MATRIZ:", align_img)
         img_rep = np.array(model.compute_face_descriptor(align_img))
+        #print("face RECOG: ", len(img_rep))
+
         # Compare the face in real time with the faces that we already have
-        #aux = 1
+        #aux = 1 
         #compare each face in the image with the faces in the database
-        for i in range(0, len(img_rep)):
-            name = "Face"
-            
-            for j in range(0, len(known_face)):
-                euclidean_dist = list(np.linalg.norm(known_face - img_rep, axis=1) <= 0.6)
+        for i in range(0, len(img_detected)):
+            name = 'Face'
+            #print(align_img)
+            #for align_imgs in align_img:
+            #align_img = cv2.resize(align_img, (0, 0), fx=3.33, fy=3.33)
+            for i in range(0, len(img_rep)):
+
+                euclidean_dist = list(np.linalg.norm(known_face - img_rep[i], axis=1) <= 0.6)
+                print(euclidean_dist)
                 if True in euclidean_dist:
                     fst = euclidean_dist.index(True)
+                    print(fst)
                     name = known_name[fst]
-                    break
-            if name not in face_name:
-                face_name.append(name)
+                
+            face_name.insert(i, name)
         print(face_name)
         #print(face_name)
         #bounding box
         for i, rects in enumerate(img_detected):
+            center_x = int((rects.left() + rects.right()) / 2)
             
             cv2.rectangle(small_frame, (rects.left(), rects.top()), (rects.right(), rects.bottom()), (0, 255, 0), 2)
             print(rects.left(), rects.top(), rects.right(), rects.bottom())
-            for name in face_name:    
-                print(name)     
-                cv2.putText(small_frame, name, (rects.left(), rects.top()), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-
+            cv2.putText(small_frame, face_name[i], (rects.left(), rects.top()), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
         
-    except: #CvBridgeError as e:
-        #print(e)
+    except CvBridgeError as e:
+        print(e)
         pass
     # Show the image
     cv2.imshow('Video', small_frame)
