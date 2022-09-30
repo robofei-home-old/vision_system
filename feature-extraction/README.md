@@ -19,3 +19,8 @@ Caso tenha erro de path (out of index), verificar nos files u2net, alguns endere
 ![image](https://user-images.githubusercontent.com/103227067/193167448-cc27df96-36f1-4260-90b2-a2c118bac863.png)
 
 E assim obtemos a porcentagem de cada cor que existe na foto, e que provavelmente a maior porcentagem será a cor da peça de roupa do host
+
+<!--
+@cauansousa
+@brunoandwele
+->
