@@ -12,6 +12,7 @@ import face_recognition
 from cv_bridge import CvBridge, CvBridgeError
 from hera_face.srv import face_list
 import dlib
+import numpy as np
 
 class FaceRecog():
     # cuidado para nao ter imagem com tamanhos diferentes ou cameras diferentes, pois o reconhecimento nao vai funcionar
@@ -50,6 +51,11 @@ class FaceRecog():
 
     def recognise(self,data):
 
+        detector = dlib.get_frontal_face_detector()
+        sp = dlib.shape_predictor("/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/src/lib/shape_predictor_5_face_landmarks.dat")
+        model  = dlib.face_recognition_model_v1("/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/src/lib/dlib_face_recognition_resnet_model_v1.dat")
+
+
         # Get a reference to webcam #0 (the default one)
         try:
             # We select bgr8 because its the OpneCV encoding by default
@@ -62,70 +68,66 @@ class FaceRecog():
 
         files = fnmatch.filter(os.listdir(self.people_dir), '*.jpg')
 
-        faces_images = []
-        known_face_encodings = []
-        known_face_names = []
-        for i in range(0,len(files)):
-
-            for j in range(0,100):            
-                name = files[i].replace('.jpg','')
-                rospy.logerr(name)
-                face = face_recognition.load_image_file(self.people_dir + files[i])
-                enc = face_recognition.face_encodings(face)
-                if(len(enc)):
-                    known_face_names.append(name)
-                    faces_images.append(face)     
-                    known_face_encodings.append(enc[0])
-                    break
+        known_face = []
+        known_name = []
+        for f in range(0, len(files)):
+            for j in range(0,100):
+                img = dlib.load_rgb_image(self.people_dir + files[f])
+                img_detected = detector(img, 1)
+                img_shape = sp(img, img_detected[0])
+                align_img = dlib.get_face_chip(img, img_shape)
+                img_rep = np.array(model.compute_face_descriptor(align_img))
+                if len(img_detected) > 0:
+                    known_face.append(img_rep)
+                    known_name.append(files[f].split('.')[0])
+                    break 
                 else:
-                    rospy.logerr("não achei cara nenhuma depois de 100 tentativas!!")
+                    rospy.loginfo("No face detected in image: " + files[f])
+                    break
 
 
         # robot vision
-        small_frame = cv2.resize(video_capture, (0, 0), fx=0.5, fy=0.5)
+        small_frame = video_capture
 
-        face_locations = face_recognition.face_locations(small_frame, model="cnn")
-        print(face_locations)
-        face_encodings = face_recognition.face_encodings(small_frame, face_locations)
-        
-
-        face_names = []
         face_center = []
-        for face_encoding in face_encodings:
-            # See if the face is a match for the known face(s)
-            matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
-            name = "Face"
+        face_name = []
+        img_detected = detector(small_frame, 1)
+        faces = dlib.full_object_detections()
+        for detection in img_detected:
+            faces.append(sp(small_frame, detection))
+        align_img = dlib.get_face_chips(small_frame, faces)
+        img_rep = np.array(model.compute_face_descriptor(align_img))
+ 
+        for i in range(0, len(img_detected)):
+            name = 'Face'
+            for k in range(0, len(known_face)):      
+                euclidean_dist = list(np.linalg.norm(known_face - img_rep[i], axis=1) <= 0.6)
+                if True in euclidean_dist:
+                    fst = euclidean_dist.index(True)
+                    name = known_name[fst]
+                
+            face_name.insert(i, name)
 
-            # If a match was found in known_face_encodings, just use the first one.
-            if True in matches:
-                first_match_index = matches.index(True)
-                name = known_face_names[first_match_index]
+        for i, rects in enumerate(img_detected):
 
-            face_names.append(name)
+            if face_name[i] in known_name:
+                cv2.rectangle(small_frame, (rects.left(), rects.top()), (rects.right(), rects.bottom()), (0, 255, 0), 2)
+                cv2.putText(small_frame, face_name[i], (rects.left(), rects.top()), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+            else:
+                cv2.rectangle(small_frame, (rects.left(), rects.top()), (rects.right(), rects.bottom()), (255, 0, 0), 2)
+                cv2.putText(small_frame, face_name[i], (rects.left(), rects.top()), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
 
-        for (top, right, bottom, left), name in zip(face_locations, face_names):
-
-            # Scale back up face locations since the frame we detected in was scaled to 1/4 size
-            #top *= 2
-            #right *= 2
-            #bottom *= 2
-            #left *= 2
-
-            # Draw a box around the face
-            cv2.rectangle(video_capture, (left, top), (right, bottom), (0, 0, 255), 2)
-
-            # Draw a label with a name below the face
-            cv2.rectangle(video_capture, (left, bottom - 35), (right, bottom), (0, 0, 255))
-            font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(video_capture, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
-            height, width = video_capture.shape[:2]
-
-            center_x = (right + left)/2
+            center_x = (rects.right() + rects.left())/2
             #print("posicao em x:",center_x)
             face_center.append(center_x)
-        cv2.imshow('Video', video_capture)
-
-        face_names_str = " - ".join(face_names)
+        
+        window = dlib.image_window()
+        window.set_image(small_frame)
+        cv2.imwrite('/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/face_recogs/recog.jpg', small_frame)
+        #k = cv2.waitKey(0)
+        #if k == 27:         # wait for ESC key to exit    cv2.destroyAllWindows()
+        #    cv2.destroyAllWindows()
+        face_names_str = " - ".join(face_name)
         # transformar o center_x em float 
         face_center_float = [float(i) for i in face_center]
         #rospy.loginfo("people: " + face_names_str)
@@ -135,11 +137,11 @@ class FaceRecog():
         #cv2.waitKey(1)
         # retornar o x da pessoa especifical na imagem
         # input name of the person Outout x of the person and person name
-
+        
 
         self.recog = 1
-        print("Face centers: ", face_center)
-        return face_names, face_center_float
+        print("Face centers: ", face_center[0])
+        return face_name, face_center_float
 
 
     def handler(self, request):
