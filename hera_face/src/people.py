@@ -130,18 +130,10 @@ class FaceRecog():
         face_names_str = " - ".join(face_name)
         # transformar o center_x em float 
         face_center_float = [float(i) for i in face_center]
-        #rospy.loginfo("people: " + face_names_str)
-        
-        # Display the resulting image
-        #cv2.imshow("Image window", video_capture)
-        #cv2.waitKey(1)
-        # retornar o x da pessoa especifical na imagem
-        # input name of the person Outout x of the person and person name
-        
 
         self.recog = 1
         print("Face centers: ", face_center[0])
-        return face_name, face_center_float
+        return face_name, face_center_float, len(img_detected)
 
 
     def handler(self, request):
@@ -159,7 +151,7 @@ class FaceRecog():
         else:
             # retornar somente o nome da pessoa e a posciao em center_x
             while recog_request == 0:
-                resp, center = self.recognise(self.cam_image)
+                resp, center, num = self.recognise(self.cam_image)
                 self.rate.sleep()
 
                 for i in resp:
@@ -169,8 +161,9 @@ class FaceRecog():
                         recog_request  = 1
                         print("request ",resp[j])
                         print("center ",center[j])
+                        print("num ",num)
 
-                        return i, center[j]
+                        return i, center[j], num
 
         cv2.destroyAllWindows()
         

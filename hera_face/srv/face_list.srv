@@ -2,3 +2,4 @@ string name
 ---
 string result
 float64 center
+int64 num
