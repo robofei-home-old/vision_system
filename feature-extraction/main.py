@@ -14,19 +14,21 @@ from u2net_test import mask
 import glob
 import json
 from mask_detect import ifmask
+from height_estimate import height_estimate
 
 
 def creating_mask():
-    pf = glob.glob('images/*')
+    pf = glob.glob('/home/robofei/catkin_hera/src/3rdParty/vision_system/feature-extraction/images/*')
     img_path = pf[0]
     output = mask(img_path)
     output = load_img(output)
     RESCALE = 255
-    out_img = img_to_array(output)
+    out_img = img_to_array(output) / RESCALE
     THRESHOLD = 0.2
     out_img[out_img > THRESHOLD] = 1
     out_img[out_img <= THRESHOLD] = 0
     shape = out_img.shape
+    print("Shape: ", shape)
     a_layer_init = np.ones(shape=(shape[0], shape[1], 1))
     mul_layer = np.expand_dims(out_img[:, :, 0], axis=2)
     a_layer = mul_layer * a_layer_init
@@ -39,7 +41,11 @@ def creating_mask():
     inp_img /= RESCALE
     # since the output image is rgba, convert this also to rgba, but with no transparency
     a_layer = np.ones(shape=(shape[0], shape[1], 1))
+    print("Shape 1", a_layer.shape)
+    print("Shape 2", inp_img.shape)
     rgba_inp = np.append(inp_img, a_layer, axis=2)
+    print("Shape 3", rgba_inp.shape)
+    print("Shape 4", rgba_out.shape)
     # simply multiply the 2 rgba images to remove the backgound
     rem_back = (rgba_inp * rgba_out)
     rem_back_scaled = Image.fromarray((rem_back * RESCALE).astype('uint8'), 'RGBA')
@@ -47,7 +53,11 @@ def creating_mask():
 
     rem_back_scaled.save('results/removed_background.png')
 
-
+    out_layer = out_img[:,:,1]
+    y_starts = [np.where(out_layer.T[i]==1)[0][0] if len(np.where(out_layer.T[i]==1)[0])!=0 else out_layer.T.shape[0]+1 for i in range(out_layer.T.shape[0])]
+    
+    global starty
+    starty = min(y_starts)
 
 def pose_points(path_image):
     null = 'null'
@@ -62,52 +72,53 @@ def pose_points(path_image):
                   ["Neck", "RHip"], ["RHip", "RKnee"], ["RKnee", "RAnkle"], ["Neck", "LHip"],
                   ["LHip", "LKnee"], ["LKnee", "LAnkle"], ["Neck", "Nose"], ["Nose", "REye"],
                   ["REye", "REar"], ["Nose", "LEye"], ["LEye", "LEar"]]
-    inWidth = 640
-    inHeight = 480
-    net = cv2.dnn.readNetFromTensorflow("graph_opt.pb")
+    inWidth = 480
+    inHeight = 640
+    net = cv2.dnn.readNetFromTensorflow("/home/robofei/catkin_hera/src/3rdParty/vision_system/feature-extraction/graph_opt.pb")
     cap = cv2.imread(path_image)
     #cap = cv2.resize(aux, (720, 1280))
 
-    while cv2.waitKey(1) < 0:
-        frame = cap
+    
+    frame = cap
+    print(cap)
 
-        frameWidth = frame.shape[1]
-        frameHeight = frame.shape[0]
+    frameWidth = frame.shape[1]
+    frameHeight = frame.shape[0]
 
-        net.setInput(
-            cv2.dnn.blobFromImage(frame, 1.0, (inWidth, inHeight), (127.5, 127.5, 127.5), swapRB=True, crop=False))
-        out = net.forward()
-        out = out[:, :19, :, :]  # MobileNet output [1, 57, -1, -1], we only need the first 19 elements
+    net.setInput(
+        cv2.dnn.blobFromImage(frame, 1.0, (inWidth, inHeight), (127.5, 127.5, 127.5), swapRB=True, crop=False))
+    out = net.forward()
+    out = out[:, :19, :, :]  # MobileNet output [1, 57, -1, -1], we only need the first 19 elements
 
-        assert (len(BODY_PARTS) == out.shape[1])
+    assert (len(BODY_PARTS) == out.shape[1])
 
-        points = []
-        for i in range(len(BODY_PARTS)):
-            # Slice heatmap of corresponging body's part.
-            heatMap = out[0, i, :, :]
+    points = []
+    for i in range(len(BODY_PARTS)):
+        # Slice heatmap of corresponging body's part.
+        heatMap = out[0, i, :, :]
 
-            # Originally, we try to find all the local maximums. To simplify a sample
-            # we just find a global one. However only a single pose at the same time
-            # could be detected this way.
-            _, conf, _, point = cv2.minMaxLoc(heatMap)
-            x = (frameWidth * point[0]) / out.shape[3]
-            y = (frameHeight * point[1]) / out.shape[2]
-            # Add a point if it's confidence is higher than threshold.
-            points.append((int(x), int(y)) if conf > 0.2 else None)
+        # Originally, we try to find all the local maximums. To simplify a sample
+        # we just find a global one. However only a single pose at the same time
+        # could be detected this way.
+        _, conf, _, point = cv2.minMaxLoc(heatMap)
+        x = (frameWidth * point[0]) / out.shape[3]
+        y = (frameHeight * point[1]) / out.shape[2]
+        # Add a point if it's confidence is higher than threshold.
+        points.append((int(x), int(y)) if conf > 0.2 else None)
 
-        for pair in POSE_PAIRS:
-            partFrom = pair[0]
-            partTo = pair[1]
-            assert (partFrom in BODY_PARTS)
-            assert (partTo in BODY_PARTS)
+    for pair in POSE_PAIRS:
+        partFrom = pair[0]
+        partTo = pair[1]
+        assert (partFrom in BODY_PARTS)
+        assert (partTo in BODY_PARTS)
 
-            idFrom = BODY_PARTS[partFrom]
-            idTo = BODY_PARTS[partTo]
+        idFrom = BODY_PARTS[partFrom]
+        idTo = BODY_PARTS[partTo]
 
-            if points[idFrom] and points[idTo]:
-                cv2.line(frame, points[idFrom], points[idTo], (0, 255, 0), 3)
-                cv2.ellipse(frame, points[idFrom], (3, 3), 0, 0, 360, (0, 0, 255), cv2.FILLED)
-                cv2.ellipse(frame, points[idTo], (3, 3), 0, 0, 360, (0, 0, 255), cv2.FILLED)
+        if points[idFrom] and points[idTo]:
+            cv2.line(frame, points[idFrom], points[idTo], (0, 255, 0), 3)
+            cv2.ellipse(frame, points[idFrom], (3, 3), 0, 0, 360, (0, 0, 255), cv2.FILLED)
+            cv2.ellipse(frame, points[idTo], (3, 3), 0, 0, 360, (0, 0, 255), cv2.FILLED)
 
         t, _ = net.getPerfProfile()
         freq = cv2.getTickFrequency() / 1000
@@ -270,9 +281,11 @@ def features(img_path):
         body_colors.append(output_color)
     # Return the list of colors
     print(body_colors)
+    print("Pixel topo = ", starty)
+    height_estimate(150, starty)
     return body_colors
 
-features('images/img.jpeg')
+features('/home/robofei/catkin_hera/src/3rdParty/vision_system/feature-extraction/images/bgg150.jpg')
 
 
 
