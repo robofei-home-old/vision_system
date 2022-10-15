@@ -15,13 +15,13 @@ def ifmask(path):
 	# construct the argument parser and parse the arguments
 
 	# load our serialized face detector model from disk
-	prototxtPath = os.path.sep.join(['face_detector', "deploy.prototxt"])
-	weightsPath = os.path.sep.join(['face_detector',
+	prototxtPath = os.path.sep.join(['src/vision_system/features_pkg/src/face_detector', "deploy.prototxt"])
+	weightsPath = os.path.sep.join(['src/vision_system/features_pkg/src/face_detector',
 		"res10_300x300_ssd_iter_140000.caffemodel"])
 	net = cv2.dnn.readNet(prototxtPath, weightsPath)
 
 	# load the face mask detector model from disk
-	model = load_model('mask_detector.model')
+	model = load_model('src/vision_system/features_pkg/src/mask_detector.model')
 
 	# load the input image from disk, clone it, and grab the image spatial
 	# dimensions
@@ -72,19 +72,7 @@ def ifmask(path):
 
 			# determine the class label and color we'll use to draw
 			# the bounding box and text
-			label = "Mask" if mask > withoutMask else "No Mask"
-			print(label)
-			color = (0, 255, 0) if label == "Mask" else (0, 0, 255)
-
-			# include the probability in the label
-			label = "{}: {:.2f}%".format(label, max(mask, withoutMask) * 100)
-
-			# display the label and bounding box rectangle on the output
-			# frame
-			cv2.putText(image, label, (startX, startY - 10),
-				cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
-			cv2.rectangle(image, (startX, startY), (endX, endY), color, 2)
-
-	# show the output image
-	cv2.destroyAllWindows()
-	
+			if mask > withoutMask:
+				return "Mask"
+			else:
+				return "No Mask"

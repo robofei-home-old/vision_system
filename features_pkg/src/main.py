@@ -257,11 +257,11 @@ def color(xxxxx):
         return 'Pink'
 
 
-def features(img_path):
+def features(img_path, distance):
 
     # Separate the person in three parts and save a photo of each part and takes the path from it
     # body_parts - list of the body_image paths
-    pose_points(img_path) 
+    pose_points(img_path)
     
     # Create a mask for the person and remove background
     
@@ -282,7 +282,7 @@ def features(img_path):
     # Return the list of colors
     print(body_colors)
     print("Pixel topo = ", starty)
-    height_estimate(150, starty)
+    height_estimate(distance, starty)
     return body_colors
 
 features('/home/robofei/catkin_hera/src/3rdParty/vision_system/feature-extraction/images/bgg150.jpg')

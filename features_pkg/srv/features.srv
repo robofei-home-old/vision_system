@@ -1,3 +1,6 @@
-string name
+float64 dist
 ---
-string result
+string mask
+string chest
+string leg
+float64 height

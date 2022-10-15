@@ -8,4 +8,4 @@ def height_estimate(distance, height):
     else:
         subject_height = height - 640
         hf = (((subject_height*camera_image_height)/1280)/100) + 1.52
-    print("Você tem entre %.2fm e %.2fm de altura." % ((hf - 0.02), (hf + 0.02)))
+    return hf

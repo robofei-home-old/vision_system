@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from locale import LC_MESSAGES
 from pyexpat import model
 import sys
 import os
@@ -35,12 +36,10 @@ from height_estimate import height_estimate
 class FeaturesRecog():
     # cuidado para nao ter imagem com tamanhos diferentes ou cameras diferentes, pois o reconhecimento nao vai funcionar
 
-    recog = 0
-
     def __init__(self):
-        rospy.Service('feature_recog', features, self.handler)
+        rospy.Service('features_pkg', features, self.handler)
         
-        rospy.loginfo("Start FeatureRecogniser Init process...")
+        rospy.loginfo("Start FaceRecogniser Init process...")
         # get an instance of RosPack with the default search paths
         self.rate = rospy.Rate(5)
         rospack = rospkg.RosPack()
@@ -49,11 +48,26 @@ class FeaturesRecog():
 
         self.bridge_object = CvBridge()
         rospy.loginfo("Start camera suscriber...")
-        rospy.loginfo("Finished FeatureRecogniser Init process...Ready")
+        self.topic = "/usb_cam/image_raw"
+        self._check_cam_ready()
+        self.image_sub = rospy.Subscriber(self.topic,Image,self.camera_callback)
+        rospy.loginfo("Finished FaceRecogniser Init process...Ready")
 
+    def _check_cam_ready(self):
+      self.cam_image = None
+      while self.cam_image is None and not rospy.is_shutdown():
+         try:
+               self.cam_image = rospy.wait_for_message(self.topic, Image, timeout=1.0)
+               rospy.logdebug("Current "+self.topic+" READY=>" + str(self.cam_image))
+
+         except:
+               rospy.logerr("Current "+self.topic+" not ready yet, retrying.")
+
+    def camera_callback(self,data):
+        self.cam_image = data
 
     def creating_mask(self):
-        pf = glob.glob('/home/robofei/catkin_hera/src/3rdParty/vision_system/features_pkg/src/images/*')
+        pf = glob.glob('/home/baggio/Documents/catkin_hera/src/vision_system/features_pkg/src/base/*')
         img_path = pf[0]
         output = mask(img_path)
         output = load_img(output)
@@ -86,7 +100,7 @@ class FeaturesRecog():
         rem_back_scaled = Image.fromarray((rem_back * RESCALE).astype('uint8'), 'RGBA')
         # save the resulting image to colab
 
-        rem_back_scaled.save('results/removed_background.png')
+        rem_back_scaled.save('src/vision_system/features_pkg/src/results/removed_background.png')
 
         out_layer = out_img[:,:,1]
         y_starts = [np.where(out_layer.T[i]==1)[0][0] if len(np.where(out_layer.T[i]==1)[0])!=0 else out_layer.T.shape[0]+1 for i in range(out_layer.T.shape[0])]
@@ -109,7 +123,7 @@ class FeaturesRecog():
                     ["REye", "REar"], ["Nose", "LEye"], ["LEye", "LEar"]]
         inWidth = 480
         inHeight = 640
-        net = cv2.dnn.readNetFromTensorflow("/home/robofei/catkin_hera/src/3rdParty/vision_system/features_pkg/src/graph_opt.pb")
+        net = cv2.dnn.readNetFromTensorflow("/home/baggio/Documents/catkin_hera/src/vision_system/features_pkg/src/graph_opt.pb")
         cap = cv2.imread(path_image)
         #cap = cv2.resize(aux, (720, 1280))
 
@@ -158,59 +172,66 @@ class FeaturesRecog():
             t, _ = net.getPerfProfile()
             freq = cv2.getTickFrequency() / 1000
             lx = cv2.putText(frame, '%.2fms' % (t / freq), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
-            cv2.imwrite('results/pose_points.png', lx)
-            with open('points.json', 'w') as f:
+            cv2.imwrite('src/vision_system/features_pkg/src/results/pose_points.png', lx)
+            with open('src/vision_system/features_pkg/src/points.json', 'w') as f:
                 json.dump(points, f)
 
             break
 
-        with open("pointos.json", "w") as f:
-            json.dump(points, f)    
+        with open("src/vision_system/features_pkg/src/points.json", "w") as f:
+            json.dump(points, f)
 
-        with open('pointos.json', 'r') as f:
+        with open('src/vision_system/features_pkg/src/points.json', 'r') as f:
             point = json.load(f)
 
 
         neck = point[1][1]
-        cint = point[8][1] + 25
-        if point[12][1] != null:
+        print(point[8])
+
+        if point[8] != None:
+            cint = point[8][1] + 25
+        else:
+            cint = 1124
+
+        if point[12] != None:
             knee = point[12][1]
             print(knee)
-        elif point[9][1] != null:
+        elif point[9] != None:
             knee = point[9][1]
             print(knee)
         else:
-            knee = null
+            knee = None
             print(knee)
 
         self.creating_mask()
         
-        way = glob.glob('images/*')
-        for py_file in way:
-            try:
-                os.remove(py_file)
-            except OSError as e:
-                print(f"Error:{ e.strerror}")
+        #way = glob.glob('src/vision_system/features_pkg/src/images/*')
+        #for py_file in way:
+            #try:
+                #os.remove(py_file)
+            #except OSError as e:
+                #print(f"Error:{ e.strerror}")
                 
-        modelo = cv2.imread('results/removed_background.png')
+        modelo = cv2.imread('src/vision_system/features_pkg/src/results/removed_background.png')
 
         for x in range(3):
             if x == 0:
                 foto = modelo[neck - 25:cint, 0:]
-                cv2.imwrite('images/torso.png', foto)  
+                cv2.imwrite('src/vision_system/features_pkg/src/images/torso.png', foto)  
             elif x == 1:
-                if knee != null:
+                if knee != None:
+                    print("foto antes", foto)
                     print("AQUI", knee)
                     print("CINT:", cint)
                     foto = modelo[cint - 25:knee, 0:]
-                    print(type(foto))
-                    cv2.imwrite('images/pernas.png', foto)
+                    print(foto)
+                    cv2.imwrite('src/vision_system/features_pkg/src/images/pernas.png', foto)
                 else: 
                     foto = modelo[cint - 25:, 0:]
-                    cv2.imwrite('images/pernas.png', foto)
+                    cv2.imwrite('src/vision_system/features_pkg/src/images/pernas.png', foto)
             else:
                 foto = modelo[:neck - 10]
-                cv2.imwrite('images/cabeca.png', foto)    
+                cv2.imwrite('src/vision_system/features_pkg/src/images/cabeca.png', foto)    
         print("Saved points!!")
 
     def color(self, xxxxx):
@@ -292,60 +313,54 @@ class FeaturesRecog():
             print('Pink')
             return 'Pink'
 
-    def features(self, img_path):
+    def features(self, distance):
+        self.people_dir = '/home/baggio/Documents/catkin_hera/src/vision_system/features_pkg/src/base/'
 
+        files = fnmatch.filter(os.listdir(self.people_dir), '*.jpg')
         # Separate the person in three parts and save a photo of each part and takes the path from it
         # body_parts - list of the body_image paths
-        self.pose_points(img_path) 
+        self.pose_points(self.people_dir + files[0]) 
         
         # Create a mask for the person and remove background
         
         # Create a empty list to save the colors
         body_colors = []
 
-        for parts in glob.glob('images/*'):
+        for parts in glob.glob('src/vision_system/features_pkg/src/images/*'):
 
-            if parts == 'images/cabeca.png':
-                ifmask('images/cabeca.png')
+            if parts == 'src/vision_system/features_pkg/src/images/cabeca.png':
+               mask = ifmask('src/vision_system/features_pkg/src/images/cabeca.png')
             
-            print(parts)
             # Get the main color of the image
             output_color = self.color(parts)
             # Add to the body_colors list
             # First element[0] is the torso color, second[1] is the legs color
+            
             body_colors.append(output_color)
+        chest = body_colors[0]
+        leg = body_colors[1]
         # Return the list of colors
-        print(body_colors)
-        print("Pixel topo = ", starty)
-        height_estimate(150, starty)
-        return body_colors
+        height = height_estimate(distance, starty)
+        os.system("rm src/vision_system/features_pkg/src/images/*")
+        return mask, chest, leg, height
 
-    def feature(self):
-
-        self.people_dir = '/home/robofei/catkin_hera/src/3rdParty/vision_system/features_pkg/src/images/'
-
-        files = fnmatch.filter(os.listdir(self.people_dir), '*.jpg')
-        carac = self.features(self.people_dir + files[0])
-        print(carac)
-
-        return 0
+    def saveImage(self, data):
+        small_frame = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
+        (h, w) = small_frame.shape[:2]
+        (cX, cY) = (w // 2, h // 2)
+        M = cv2.getRotationMatrix2D((cX, cY), 90, 1.0)
+        rotated = cv2.warpAffine(small_frame, M, (w, h))
+        cv2.imwrite("/home/baggio/Documents/catkin_hera/src/vision_system/features_pkg/src/base/img.jpg", rotated)
 
 
     def handler(self, request):
-        self.recog = 0
+        self.image_sub = rospy.Subscriber(self.topic,Image,self.camera_callback)
+        self.saveImage(self.cam_image)
 
-        if request.name == '':
+        mask, chest, leg, height = self.features(request.dist)
+        self.rate.sleep()
 
-            while self.recog == 0:
-                resp = self.feature()
-                self.rate.sleep()
-                self.recog = 1
-
-                return resp 
-
-        cv2.destroyAllWindows()
-        
-
+        return mask, chest, leg, height
 
 if __name__ == '__main__':
     rospy.init_node('feature_recog', log_level=rospy.INFO)
