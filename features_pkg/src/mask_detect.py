@@ -15,13 +15,13 @@ def ifmask(path):
 	# construct the argument parser and parse the arguments
 
 	# load our serialized face detector model from disk
-	prototxtPath = os.path.sep.join(['src/vision_system/features_pkg/src/face_detector', "deploy.prototxt"])
-	weightsPath = os.path.sep.join(['src/vision_system/features_pkg/src/face_detector',
+	prototxtPath = os.path.sep.join(['/home/baggio/catkin_hera/src/3rdParty/vision_system/features_pkg/src/face_detector', "deploy.prototxt"])
+	weightsPath = os.path.sep.join(['/home/baggio/catkin_hera/src/3rdParty/vision_system/features_pkg/src/face_detector',
 		"res10_300x300_ssd_iter_140000.caffemodel"])
 	net = cv2.dnn.readNet(prototxtPath, weightsPath)
 
 	# load the face mask detector model from disk
-	model = load_model('src/vision_system/features_pkg/src/mask_detector.model')
+	model = load_model('/home/baggio/catkin_hera/src/3rdParty/vision_system/features_pkg/src/mask_detector.model')
 
 	# load the input image from disk, clone it, and grab the image spatial
 	# dimensions
@@ -43,10 +43,11 @@ def ifmask(path):
 		# extract the confidence (i.e., probability) associated with
 		# the detection
 		confidence = detections[0, 0, i, 2]
+		print("Confidence: ", confidence)
 
 		# filter out weak detections by ensuring the confidence is
 		# greater than the minimum confidence
-		if confidence > 0.5:
+		if confidence > 0.3:
 			# compute the (x, y)-coordinates of the bounding box for
 			# the object
 			box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
@@ -69,6 +70,8 @@ def ifmask(path):
 			# pass the face through the model to determine if the face
 			# has a mask or not
 			(mask, withoutMask) = model.predict(face)[0]
+			print(mask)
+			print(withoutMask)
 
 			# determine the class label and color we'll use to draw
 			# the bounding box and text
