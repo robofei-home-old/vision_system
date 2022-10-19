@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from json import detect_encoding
 import sys
 import os
 import rospy
@@ -9,6 +10,7 @@ import cv2
 import face_recognition
 import numpy
 import tf
+import dlib
 
 from os.path import expanduser
 from cv_bridge import CvBridge, CvBridgeError
@@ -54,7 +56,6 @@ class FaceCheck():
         
 
     def face_check(self,data):
-
         # Get a reference to webcam #0 (the default one)
         print("Start face_check")
         try:
@@ -66,9 +67,11 @@ class FaceCheck():
         small_frame = cv2.resize(video_capture, (0, 0), fx=0.5, fy=0.5)
 
         # Find all the faces and face encodings in the current frame of video
-        face_locations = face_recognition.face_locations(small_frame)
+        detector = dlib.get_frontal_face_detector()
+        face_locations = detector(small_frame, 1)
+        print(face_locations)
        
-        if not face_locations:
+        if len(face_locations) <= 0:
             rospy.logwarn("No Faces found, please get closer...")
             return False
 

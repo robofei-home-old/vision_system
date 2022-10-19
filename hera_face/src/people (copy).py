@@ -54,10 +54,10 @@ class FaceRecog():
     def recognise(self, data, nome_main):
 
         detector = dlib.get_frontal_face_detector()
-        sp = dlib.shape_predictor("/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/src/shape_predictor_5_face_landmarks.dat")
-        model  = dlib.face_recognition_model_v1("/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/src/dlib_face_recognition_resnet_model_v1.dat")
+        sp = dlib.shape_predictor("/home/hera/catkin_hera/src/3rdParty/vision_system/hera_face/src/shape_predictor_5_face_landmarks.dat")
+        model  = dlib.face_recognition_model_v1("/home/hera/catkin_hera/src/3rdParty/vision_system/hera_face/src/dlib_face_recognition_resnet_model_v1.dat")
 
-        self.people_dir = '/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/face_images/'
+        self.people_dir = '/home/hera/catkin_hera/src/3rdParty/vision_system/hera_face/face_images/'
 
         files = fnmatch.filter(os.listdir(self.people_dir), '*.jpg')
 
@@ -87,22 +87,14 @@ class FaceRecog():
         face_center = []
         face_name = []
         img_detected = detector(small_frame, 1)
-        # se nao detectar ninguem
-        if len(img_detected) == 0:
-            rospy.loginfo("No face detected")
-            return '', 0.0, len(img_detected)
-        else:
-            print("Face Detectada", img_detected)
-            faces = dlib.full_object_detections()
+        if len(img_detected) > 0:
             
-
+            faces = dlib.full_object_detections()
             for detection in img_detected:
                 faces.append(sp(small_frame, detection))
             
             align_img = dlib.get_face_chips(small_frame, faces)                    
             img_rep = np.array(model.compute_face_descriptor(align_img))
-
-        #--------------------------------------------------------------------------------
     
             for i in range(0, len(img_detected)):
                 name = 'Face'
@@ -111,12 +103,8 @@ class FaceRecog():
                     if True in euclidean_dist:
                         fst = euclidean_dist.index(True)
                         name = known_name[fst]
-                    else:
-                        continue
                     
                 face_name.insert(i, name)
-
-            #--------------------------------------------------------------------------
 
             for i, rects in enumerate(img_detected):
 
@@ -132,7 +120,7 @@ class FaceRecog():
             
             window = dlib.image_window()
             window.set_image(small_frame)
-            cv2.imwrite('/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/face_recogs/recog.jpg', small_frame)
+            cv2.imwrite('/home/hera/catkin_hera/src/3rdParty/vision_system/hera_face/face_recogs/recog.jpg', small_frame)
             #k = cv2.waitKey(0)
             #if k == 27:         # wait for ESC key to exit    cv2.destroyAllWindows()
             #    cv2.destroyAllWindows()
@@ -143,25 +131,23 @@ class FaceRecog():
             print("Face Recognised: ", face_name)
             print("Face centers: ", face_center)
             print("Pessoas na foto: ", len(img_detected))
-
-            #---------------------------------------------------------------------
             if nome_main == '':
                 name = 'face'
                 center = '0.0'
                 self.recog = 1
                 return name, center, len(img_detected)
-
             elif nome_main in face_name:
                 center = face_center[face_name.index(nome_main)]
                 name = face_name[face_name.index(nome_main)]
+                #face_center_float = [float(i) for i in face_center]
                 print("Pessoa encontrada")
                 self.recog = 1
                 return name, center, len(img_detected)
-            else:
-                self.recog = 0
-                name = 'face'
-                center = '0.0'
-                return name, center, len(img_detected)
+        else:
+            time.sleep(1)
+            print("No face detected")
+            
+
 
     def handler(self, request):
         self.recog = 0

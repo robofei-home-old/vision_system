@@ -9,7 +9,7 @@ import cv2
 import face_recognition
 import numpy
 import tf
-
+import dlib
 from os.path import expanduser
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs import point_cloud2 as pc2
@@ -75,13 +75,16 @@ class FaceCapture():
         image_path = os.path.join(self.path_to_package+'/face_images/')
 
         # Find all the faces and face encodings in the current frame of video
-        print(face_recognition)
-        face_locations = face_recognition.face_locations(small_frame)
+        detector = dlib.get_frontal_face_detector()
+        face_locations = detector(small_frame, 1)
        
-        if not face_locations:
+        if len(face_locations) <= 0:
             rospy.logwarn("No Faces found, please get closer...")
 
+        elif len(face_locations) > 1:
+            rospy.looginfo("More than one face found, please get closer...")
         else:
+            # Save the captured image into the datasets folder
             writeStatus = cv2.imwrite(str(image_path) + request.name + '.jpg', small_frame)
         
             if writeStatus is True:
@@ -91,8 +94,7 @@ class FaceCapture():
                 return writeStatus
             else:
                 rospy.loginfo('Face not saved!')
-                return writeStatus
-                
+                return writeStatus   
 
     def handler(self, request):
         self.recog = 0
