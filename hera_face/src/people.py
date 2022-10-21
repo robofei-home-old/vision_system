@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+from calendar import c
 from pyexpat import model
 import sys
 import os
 from turtle import back
 from unicodedata import name
+
+from psutil import virtual_memory
+from regex import E, F
 import rospy
 from sensor_msgs.msg import Image
 import rospkg
@@ -15,6 +19,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from hera_face.srv import face_list
 import dlib
 import numpy as np
+import publisher
 
 class FaceRecog():
     # cuidado para nao ter imagem com tamanhos diferentes ou cameras diferentes, pois o reconhecimento nao vai funcionar
@@ -23,14 +28,12 @@ class FaceRecog():
 
     def __init__(self):
         rospy.Service('face_recog', face_list, self.handler)
-        
         rospy.loginfo("Start FaceRecogniser Init process...")
         # get an instance of RosPack with the default search paths
         self.rate = rospy.Rate(5)
         rospack = rospkg.RosPack()
         # get the file path for my_face_recogniser
         self.path_to_package = rospack.get_path('hera_face')
-
         self.bridge_object = CvBridge()
         rospy.loginfo("Start camera suscriber...")
         self.topic = "/usb_cam/image_raw"
@@ -117,9 +120,9 @@ class FaceRecog():
                 face_name.insert(i, name)
 
             #--------------------------------------------------------------------------
-
+            coords = []
             for i, rects in enumerate(img_detected):
-
+                list = []
                 if face_name[i] in known_name:
                     cv2.rectangle(small_frame, (rects.left(), rects.top()), (rects.right(), rects.bottom()), (0, 255, 0), 2)
                     cv2.putText(small_frame, face_name[i], (rects.left(), rects.top()), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
@@ -129,20 +132,19 @@ class FaceRecog():
 
                 center_x = (rects.right() + rects.left())/2
                 face_center.append(center_x)
-            
+                list.append(rects.left())
+                list.append(rects.top())
+                list.append(rects.right())
+                list.append(rects.bottom())
+                coords.append(list)
             window = dlib.image_window()
             window.set_image(small_frame)
             cv2.imwrite('/home/robofei/catkin_hera/src/3rdParty/vision_system/hera_face/face_recogs/recog.jpg', small_frame)
-            #k = cv2.waitKey(0)
-            #if k == 27:         # wait for ESC key to exit    cv2.destroyAllWindows()
-            #    cv2.destroyAllWindows()
-            face_names_str = " - ".join(face_name)
-            # transformar o center_x em float 
 
-            # self.recog = 1
             print("Face Recognised: ", face_name)
             print("Face centers: ", face_center)
             print("Pessoas na foto: ", len(img_detected))
+            coords 
 
             #---------------------------------------------------------------------
             if nome_main == '':
@@ -150,7 +152,9 @@ class FaceRecog():
                 center = '0.0'
                 self.recog = 1
                 return name, center, len(img_detected)
-
+            elif nome_main == 'all':
+                
+                return coords
             elif nome_main in face_name:
                 center = face_center[face_name.index(nome_main)]
                 name = face_name[face_name.index(nome_main)]
@@ -177,7 +181,8 @@ class FaceRecog():
                 
 
                 return name, float(center), num
-
+        elif request.name == 'all':
+            
         else:
             # retornar somente o nome da pessoa e a posciao em center_x
             while self.recog == 0:

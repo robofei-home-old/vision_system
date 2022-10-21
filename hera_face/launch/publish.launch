@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>    
+    <node name="hera_face" pkg="hera_face" type="publisher.py" output="screen">
+        <param name="image_topic" value="/usb_cam/image_raw" />
+        <param name="point_cloud_topic" value="/camera/depth/points" />
+    </node>
+</launch>
+ 

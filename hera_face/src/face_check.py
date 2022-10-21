@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from json import detect_encoding
 import sys
 import os
 import rospy
@@ -67,9 +66,7 @@ class FaceCheck():
         small_frame = cv2.resize(video_capture, (0, 0), fx=0.5, fy=0.5)
 
         # Find all the faces and face encodings in the current frame of video
-        detector = dlib.get_frontal_face_detector()
-        face_locations = detector(small_frame, 1)
-        print(face_locations)
+        face_locations = dlib.get_frontal_face_detector(small_frame, 1)
        
         if len(face_locations) <= 0:
             rospy.logwarn("No Faces found, please get closer...")

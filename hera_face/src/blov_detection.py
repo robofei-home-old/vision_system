@@ -102,7 +102,6 @@ class ColorFilter(object):
         cv2.waitKey(1)
 
 
-
 def main():
     color_filter_object = ColorFilter()
     rospy.init_node('color_filter_node', anonymous=True)
