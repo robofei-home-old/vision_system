@@ -4,9 +4,9 @@ import os
 import rospy
 from sensor_msgs.msg import Image
 import rospkg
-print("Importing cv2")
+import fnmatch
 import cv2
-print("Importing cv2..Done")
+import time
 import face_recognition
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -22,7 +22,7 @@ class FaceRecogniser(object):
 
         self.bridge_object = CvBridge()
         rospy.loginfo("Start camera suscriber...")
-        self.topic = "/camera/rgb/image_raw"
+        self.topic = "/usb_cam/image_raw"
         self._check_cam_ready()
         self.image_sub = rospy.Subscriber(self.topic,Image,self.camera_callback)
         rospy.loginfo("Finished FaceRecogniser Init process...Ready")
@@ -54,46 +54,36 @@ class FaceRecogniser(object):
             video_capture = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
         except CvBridgeError as e:
             print(e)
+        
+        self.people_dir = '/home/hera/catkin_hera/src/3rdParty/vision_system/hera_face/face_images/'
+
+        files = fnmatch.filter(os.listdir(self.people_dir), '*.jpg')
+
+        faces_images = []
+        known_face_encodings = []
+        known_face_names = []
+        for i in range(0,len(files)):
+            faces_images.append(face_recognition.load_image_file(self.people_dir + files[i]))
+            known_face_encodings.append(face_recognition.face_encodings(faces_images[i])[0])
+            known_face_names.append(files[i].replace('.jpg',''))
 
 
-        # Load a sample picture and learn how to recognize it.
-        image_path = os.path.join(self.path_to_package,"face_images/host.jpg")
-
-        standing_person_image = face_recognition.load_image_file(image_path)
-        standing_person_face_encoding = face_recognition.face_encodings(standing_person_image)[0]
-
-
-        # Initialize some variables
-        face_locations = []
-        face_encodings = []
-        face_names = []
-
-        # Resize frame of video to 1/2 size for faster face recognition processing
-        # If this is done be aware that you will have to make the recognition nearer.
-        # In this case it will work around maximum 1 meter, more it wont work properly
+        # robot vision
         small_frame = cv2.resize(video_capture, (0, 0), fx=0.5, fy=0.5)
 
-        #cv2.imshow("SMALL Image window", small_frame)
-
-
-        # Find all the faces and face encodings in the current frame of video
         face_locations = face_recognition.face_locations(small_frame)
         face_encodings = face_recognition.face_encodings(small_frame, face_locations)
-
-        if not face_encodings:
-            rospy.logwarn("No Faces found, please get closer...")
 
         face_names = []
         for face_encoding in face_encodings:
             # See if the face is a match for the known face(s)
-            match = face_recognition.compare_faces([standing_person_face_encoding], face_encoding)
-            name = "Unknown"
+            matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+            name = "Face"
 
-            if match[0]:
-                rospy.loginfo("MATCH")
-                name = "Nicolas"
-            else:
-                rospy.logwarn("NO Match")
+            # If a match was found in known_face_encodings, just use the first one.
+            if True in matches:
+                first_match_index = matches.index(True)
+                name = known_face_names[first_match_index]
 
             face_names.append(name)
 
@@ -113,6 +103,14 @@ class FaceRecogniser(object):
             cv2.rectangle(video_capture, (left, bottom - 35), (right, bottom), (0, 0, 255))
             font = cv2.FONT_HERSHEY_DUPLEX
             cv2.putText(video_capture, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+            height, width = video_capture.shape[:2]
+            print("Largura da image: ",width)
+            
+            print("Posicao em x:",right)
+
+        face_names_str = " - ".join(face_names)
+        rospy.loginfo("People: " + face_names_str)
+
 
         # Display the resulting image
         cv2.imshow("Image window", video_capture)

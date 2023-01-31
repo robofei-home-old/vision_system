@@ -22,7 +22,7 @@ class FaceRecog():
     recog = 0
 
     def __init__(self):
-        rospy.Service('face_recog', face_list, self.handler)
+        rospy.Service('face_recog_kinect', face_list, self.handler)
         
         rospy.loginfo("Start FaceRecogniser Init process...")
         # get an instance of RosPack with the default search paths
@@ -33,7 +33,7 @@ class FaceRecog():
 
         self.bridge_object = CvBridge()
         rospy.loginfo("Start camera suscriber...")
-        self.topic = "/usb_cam/image_raw"
+        self.topic = "/kinect_one/ir/image_raw"
         self._check_cam_ready()
         self.image_sub = rospy.Subscriber(self.topic,Image,self.camera_callback)
         rospy.loginfo("Finished FaceRecogniser Init process...Ready")
@@ -166,13 +166,14 @@ class FaceRecog():
 
         else:
             # retornar somente o nome da pessoa e a posciao em center_x
-            while self.recog == 0:
+            while recog_request == 0:
                 
                 self.image_sub = rospy.Subscriber(self.topic,Image,self.camera_callback)
-                
-                name, center, num = self.recognise(self.cam_image, request.name)
-                self.rate.sleep()
-                
+                try:
+                    name, center, num = self.recognise(self.cam_image, request.name)
+                    self.rate.sleep()
+                except:
+                    continue
 
                 return name, float(center), num
 
