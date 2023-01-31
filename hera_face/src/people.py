@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 from calendar import c
 from pyexpat import model
-import sys
 import os
-from turtle import back
-from unicodedata import name
-
-from psutil import virtual_memory
 from regex import E, F
 import rospy
 from sensor_msgs.msg import Image
@@ -14,12 +9,10 @@ import rospkg
 import fnmatch
 import cv2
 import time
-import face_recognition
-from cv_bridge import CvBridge, CvBridgeError
+from cv_bridge import CvBridge
 from hera_face.srv import face_list
 import dlib
 import numpy as np
-import publisher
 
 class FaceRecog():
     # cuidado para nao ter imagem com tamanhos diferentes ou cameras diferentes, pois o reconhecimento nao vai funcionar
