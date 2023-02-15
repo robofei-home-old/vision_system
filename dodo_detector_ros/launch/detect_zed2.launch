@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <include file="$(find freenect_launch)/launch/freenect.launch"/>
+    <!--<include file="$(find freenect_launch)/launch/freenect.launch"/>-->
     
     <node name="dodo_detector_ros" pkg="dodo_detector_ros" type="detector.py" output="screen">
         <rosparam command="load" file="$(find dodo_detector_ros)/config/main_config.yaml"/>
@@ -9,4 +9,3 @@
     </node>
 
 </launch>
- 
