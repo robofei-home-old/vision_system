@@ -156,7 +156,7 @@ class Detector:
                # vectors from the camera link to the fixed frame
                if self._global_frame is not None:
                   (trans, _) = self._tf_listener.lookupTransform('/' + self._global_frame,
-                                                                 '/kinect_one_depth',
+                                                                 '/zed2_camera_center',
                                                                  rospy.Time(0))
 
                # convert image from the subscriber into an OpenCV image
@@ -233,7 +233,7 @@ class Detector:
                         # object tf (x, y, z) must be
                         # passed as (z,-x,-y)
                         object_tf = [point_z, -point_x, -point_y]
-                        frame = 'kinect_one_depth'
+                        frame = 'zed2_camera_center'
 
                         # translate the tf in regard to the fixed frame
                         if self._global_frame is not None:
