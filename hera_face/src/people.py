@@ -28,7 +28,7 @@ class FaceRecog():
         self.bridge_object = CvBridge()
         rospy.loginfo('Start camera suscriber...')
         self.topic = '/usb_cam/image_raw'
-        self._check_cam_ready()
+        self._check_cam_ready('/zed2/zed_node/left_raw/image_raw_color')
         self.image_sub = rospy.Subscriber(self.topic,Image,self.camera_callback)
         rospy.loginfo('Finished Face recognizer Init process...Ready')
 
