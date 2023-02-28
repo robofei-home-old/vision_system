@@ -27,8 +27,10 @@ class FaceRecog():
         self.path_to_package = rospack.get_path('hera_face')
         self.bridge_object = CvBridge()
         rospy.loginfo('Start camera suscriber...')
+
         self.topic = '/zed2/zed_node/rgb/image_rect_color'
         self._check_cam_ready()
+
         self.image_sub = rospy.Subscriber(self.topic,Image,self.camera_callback)
         rospy.loginfo('Finished Face recognizer Init process...Ready')
 
